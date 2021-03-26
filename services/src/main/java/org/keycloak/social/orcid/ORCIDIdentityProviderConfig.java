@@ -28,6 +28,9 @@ public class ORCIDIdentityProviderConfig extends OIDCIdentityProviderConfig {
         super(model);
     }
 
+    public ORCIDIdentityProviderConfig() {
+    }
+
     public boolean targetSandbox() {
         String sandbox = getConfig().get("sandbox");
         return sandbox == null ? false : Boolean.valueOf(sandbox);

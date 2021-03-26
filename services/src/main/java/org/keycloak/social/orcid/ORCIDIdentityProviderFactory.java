@@ -21,6 +21,7 @@ import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.social.paypal.PayPalIdentityProviderConfig;
 
 /**
  * @author Marc Schulz-Narres
@@ -38,6 +39,12 @@ public class ORCIDIdentityProviderFactory extends AbstractIdentityProviderFactor
     public ORCIDIdentityProvider create(KeycloakSession session, IdentityProviderModel model) {
         return new ORCIDIdentityProvider(session, new ORCIDIdentityProviderConfig(model));
     }
+
+    @Override
+    public ORCIDIdentityProviderConfig createConfig() {
+        return new ORCIDIdentityProviderConfig();
+    }
+
 
     @Override
     public String getId() {
