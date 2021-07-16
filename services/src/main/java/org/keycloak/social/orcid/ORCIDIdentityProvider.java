@@ -54,7 +54,7 @@ import java.io.IOException;
  * @author Marc Schulz-Narres
  */
 public class ORCIDIdentityProvider extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
-    protected static final Logger logger = Logger.getLogger(ORCIDIdentityProvider.class);
+    // protected static final Logger logger = Logger.getLogger(ORCIDIdentityProvider.class);
 
     private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
 
@@ -88,7 +88,7 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 
     @Override
     protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken, JsonWebToken idToken) throws IOException {
-        logger.log(Logger.Level.INFO,"extractIdentity");
+        logger.info("extractIdentity");
         String id = idToken.getSubject();
         BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
         BrokeredIdentityContext identityNew = null;
@@ -138,8 +138,8 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 
     @Override
 	protected BrokeredIdentityContext extractIdentityFromProfile(EventBuilder event, JsonNode profile) {
-        logger.log(Logger.Level.INFO,"extractIdentityFromProfile");
-        logger.log(Logger.Level.INFO,profile);
+        logger.info("extractIdentityFromProfile");
+        logger.info(profile);
 		String id = getJsonProperty(profile, "sub");
 		if (id == null) {
 			event.detail(Details.REASON, "id claim is null from user info json");
@@ -154,7 +154,7 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 	 * TODO: get the users Email address from the API? Problem is: we do not have an accessToken to make the API Request
 	 */
 	private BrokeredIdentityContext ORCIDextractIdentity(JsonNode profile) {
-        logger.log(Logger.Level.INFO,"ORCIDextractIdentity");
+        logger.info("ORCIDextractIdentity");
 		String id = getJsonProperty(profile, "sub");
 
 		BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
