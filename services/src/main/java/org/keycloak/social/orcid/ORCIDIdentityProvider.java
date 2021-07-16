@@ -88,7 +88,7 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 
     @Override
     protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken, JsonWebToken idToken) throws IOException {
-        logger.info("extractIdentity");
+        logger.debug("extractIdentity");
         String id = idToken.getSubject();
         BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
         BrokeredIdentityContext identityNew = null;
@@ -138,8 +138,8 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 
     @Override
 	protected BrokeredIdentityContext extractIdentityFromProfile(EventBuilder event, JsonNode profile) {
-        logger.info("extractIdentityFromProfile");
-        logger.info(profile);
+        logger.debug("extractIdentityFromProfile");
+        logger.debug(profile);
 		String id = getJsonProperty(profile, "sub");
 		if (id == null) {
 			event.detail(Details.REASON, "id claim is null from user info json");
@@ -154,7 +154,7 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 	 * TODO: get the users Email address from the API? Problem is: we do not have an accessToken to make the API Request
 	 */
 	private BrokeredIdentityContext ORCIDextractIdentity(JsonNode profile) {
-        logger.info("ORCIDextractIdentity");
+        logger.debug("ORCIDextractIdentity");
 		String id = getJsonProperty(profile, "sub");
 
 		BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
