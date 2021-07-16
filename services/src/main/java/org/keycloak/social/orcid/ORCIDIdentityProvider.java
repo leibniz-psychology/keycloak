@@ -79,28 +79,16 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
 		return DEFAULT_SCOPE;
 	}
 
+	/*
+	 * Just fetch the URL from Config.
+	 */
     protected String getEmailUrl() {
         return ((ORCIDIdentityProviderConfig) getConfig()).getEmailUrl();
     }
 
-    private SimpleHttp.Response executeRequest(String url, SimpleHttp request) throws IOException {
-        SimpleHttp.Response response = request.asResponse();
-        if (response.getStatus() != 200) {
-            String msg = "failed to invoke url [" + url + "]";
-            try {
-                String tmp = response.asString();
-                if (tmp != null) msg = tmp;
-
-            } catch (IOException e) {
-
-            }
-            throw new IdentityBrokerException("Failed to invoke url [" + url + "]: " + msg);
-        }
-        return  response;
-    }
-
     @Override
     protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken, JsonWebToken idToken) throws IOException {
+        logger.log(Logger.Level.INFO,"extractIdentity");
         String id = idToken.getSubject();
         BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
         BrokeredIdentityContext identityNew = null;
@@ -148,6 +136,46 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
         return identity;
     }
 
+    @Override
+	protected BrokeredIdentityContext extractIdentityFromProfile(EventBuilder event, JsonNode profile) {
+        logger.log(Logger.Level.INFO,"extractIdentityFromProfile");
+        logger.log(Logger.Level.INFO,profile);
+		String id = getJsonProperty(profile, "sub");
+		if (id == null) {
+			event.detail(Details.REASON, "id claim is null from user info json");
+			event.error(Errors.INVALID_TOKEN);
+			throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "invalid token", Response.Status.BAD_REQUEST);
+		}
+		return ORCIDextractIdentity(profile);
+	}
+
+	/*
+	 * Parse a ORCID JSON Profile into a BrokeredIdentityContext
+	 * TODO: get the users Email address from the API? Problem is: we do not have an accessToken to make the API Request
+	 */
+	private BrokeredIdentityContext ORCIDextractIdentity(JsonNode profile) {
+        logger.log(Logger.Level.INFO,"ORCIDextractIdentity");
+		String id = getJsonProperty(profile, "sub");
+
+		BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
+
+		String given_name = getJsonProperty(profile, "given_name");
+		String family_name = getJsonProperty(profile, "family_name");
+
+		AbstractJsonUserAttributeMapper.storeUserProfileForMapper(identity, profile, getConfig().getAlias());
+
+		identity.setId(id);
+		identity.setFirstName(given_name);
+        identity.setLastName(family_name);
+		identity.setBrokerUserId(getConfig().getAlias() + "." + id);
+		identity.setUsername(id);
+
+		return identity;
+	}
+
+	/*
+	 * Make an ORCID-API Call using an Access Token
+	 */
     private JsonNode doApiCall(String url, String accessToken) throws IOException {
         SimpleHttp.Response response = executeRequest(url, SimpleHttp.doGet(url, session).header("Authorization", "Bearer " + accessToken).header("Accept", "application/json"));
         String contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
@@ -185,33 +213,22 @@ public class ORCIDIdentityProvider extends OIDCIdentityProvider implements Socia
         return jsonData;
     }
 
-    @Override
-	protected BrokeredIdentityContext extractIdentityFromProfile(EventBuilder event, JsonNode profile) {
-		String id = getJsonProperty(profile, "sub");
-		if (id == null) {
-			event.detail(Details.REASON, "id claim is null from user info json");
-			event.error(Errors.INVALID_TOKEN);
-			throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "invalid token", Response.Status.BAD_REQUEST);
-		}
-		return ORCIDextractIdentity(profile);
-	}
+    /*
+     * Make a Simple HTTP Request and do some Error Handling
+     */
+    private SimpleHttp.Response executeRequest(String url, SimpleHttp request) throws IOException {
+        SimpleHttp.Response response = request.asResponse();
+        if (response.getStatus() != 200) {
+            String msg = "failed to invoke url [" + url + "]";
+            try {
+                String tmp = response.asString();
+                if (tmp != null) msg = tmp;
 
-	private BrokeredIdentityContext ORCIDextractIdentity(JsonNode profile) {
-		String id = getJsonProperty(profile, "sub");
+            } catch (IOException e) {
 
-		BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
-
-		String given_name = getJsonProperty(profile, "given_name");
-		String family_name = getJsonProperty(profile, "family_name");
-
-		AbstractJsonUserAttributeMapper.storeUserProfileForMapper(identity, profile, getConfig().getAlias());
-
-		identity.setId(id);
-		identity.setFirstName(given_name);
-        identity.setLastName(family_name);
-		identity.setBrokerUserId(getConfig().getAlias() + "." + id);
-		identity.setUsername(id);
-
-		return identity;
-	}
+            }
+            throw new IdentityBrokerException("Failed to invoke url [" + url + "]: " + msg);
+        }
+        return  response;
+    }
 }
